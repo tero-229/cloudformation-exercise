@@ -10,3 +10,12 @@ Resources:
     Properties:
       ImageId: "ami-01f14919ba412de34"
       InstanceType: "t3.nano"
+  TeronCFloadBalancer:
+    Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
+    Properties:
+      Name: "TeronCFloadBalancer"
+      Scheme: "internet-facing"
+      Subnets:
+        - subnet-1629765e
+        - subnet-0deb6257
+        - subnet-7b95d91d
