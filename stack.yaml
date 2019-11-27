@@ -5,3 +5,8 @@ Resources:
     Type: "AWS::S3::Bucket"
   TeronQueue:
     Type: "AWS::SQS::Queue"
+  TeronEC2:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: "ami-01f14919ba412de34"
+      InstanceType: "t3.nano"
