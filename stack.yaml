@@ -3,4 +3,5 @@ Description: "Harjoitustemplaatti"
 Resources:
   teroncfampari2:
     Type: "AWS::S3::Bucket"
-    
+  TeronQueue:
+    Type: "AWS::SQS::Queue"
