@@ -19,3 +19,6 @@ Resources:
         - subnet-1629765e
         - subnet-0deb6257
         - subnet-7b95d91d
+Outputs:  
+  LoadBalancerDNSName:
+    Value: !GetAtt TeronCFloadBalancer.DNSName
