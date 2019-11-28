@@ -10,11 +10,15 @@ Resources:
     Properties:
       ImageId: "ami-01f14919ba412de34"
       InstanceType: "t3.nano"
+      SecurityGroups: 
+        - !Ref TeronEC2SecurityGroup
   TeronCFloadBalancer:
     Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
     Properties:
       Name: "TeronCFloadBalancer"
       Scheme: "internet-facing"
+      SecurityGroups: 
+        - !Ref TeronALBSecurityGroup
       Subnets:
         - subnet-1629765e
         - subnet-0deb6257
@@ -23,11 +27,20 @@ Resources:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
       GroupDescription: "SG for EC2"
-      SecurityGroupIngress:
+      SecurityGroupIngress: 
         - IpProtocol: TCP
           FromPort: 80
           ToPort: 80
-          
+          SourceSecurityGroupId: !Ref TeronALBSecurityGroup
+  TeronALBSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "SG for ALB"
+      # SecurityGroupIngress:
+      #   - IpProtocol: TCP
+      #     FromPort: 80
+      #     ToPort: 80 
+      VpcId: vpc-7da4b71b
 Outputs:  
   LoadBalancerDNSName:
     Value: !GetAtt TeronCFloadBalancer.DNSName
