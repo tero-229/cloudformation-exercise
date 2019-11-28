@@ -19,6 +19,15 @@ Resources:
         - subnet-1629765e
         - subnet-0deb6257
         - subnet-7b95d91d
+  TeronEC2SecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "SG for EC2"
+      SecurityGroupIngress:
+        - IpProtocol: TCP
+          FromPort: 80
+          ToPort: 80
+          
 Outputs:  
   LoadBalancerDNSName:
     Value: !GetAtt TeronCFloadBalancer.DNSName
