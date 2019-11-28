@@ -1,17 +1,20 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "Harjoitustemplaatti"
+Parameters:
+  LatestAmiId:
+      Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+      Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+  PreferredInstanceType:
+      Type: String
+      Default: 't3.nano'
+  AcademyTreIP:
+      Type: String
+      Default: 109.204.206.210
 Resources:
   teroncfampari2:
     Type: "AWS::S3::Bucket"
   TeronQueue:
     Type: "AWS::SQS::Queue"
-  TeronEC2:
-    Type: "AWS::EC2::Instance"
-    Properties:
-      ImageId: "ami-01f14919ba412de34"
-      InstanceType: "t3.nano"
-      SecurityGroups: 
-        - !Ref TeronEC2SecurityGroup
   TeronCFloadBalancer:
     Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
     Properties:
@@ -27,7 +30,12 @@ Resources:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
       GroupDescription: "SG for EC2"
+      VpcId: vpc-7da4b71b
       SecurityGroupIngress: 
+        - IpProtocol: TCP
+          FromPort: 80
+          ToPort: 80
+          CidrIp: !Sub ${AcademyTreIP}/32
         - IpProtocol: TCP
           FromPort: 80
           ToPort: 80
@@ -36,10 +44,11 @@ Resources:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
       GroupDescription: "SG for ALB"
-      # SecurityGroupIngress:
-      #   - IpProtocol: TCP
-      #     FromPort: 80
-      #     ToPort: 80 
+      SecurityGroupIngress:
+        - IpProtocol: TCP
+          FromPort: 80
+          ToPort: 80
+          CidrIp: !Sub ${AcademyTreIP}/32 
       VpcId: vpc-7da4b71b
   TeronTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -57,6 +66,38 @@ Resources:
       LoadBalancerArn: !Ref TeronCFloadBalancer
       Port: 80
       Protocol: HTTP
+  TeronLaunchConfiguration:
+      Type: AWS::AutoScaling::LaunchConfiguration
+      Properties:
+        ImageId: !Ref LatestAmiId
+        InstanceType: t3.micro
+        SecurityGroups:
+          - !GetAtt TeronEC2SecurityGroup.GroupId
+        UserData:
+          Fn::Base64:
+            Fn::Join:
+              - "\n"
+              - - "#!/bin/bash"
+                - "amazon-linux-extras install epel"
+                - "amazon-linux-extras install nginx1"
+                - "systemctl start nginx"
+  TeronAutoScaling:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      MinSize: 2
+      MaxSize: 3
+      DesiredCapacity: 2
+      VPCZoneIdentifier:
+        - subnet-1629765e
+        - subnet-0deb6257
+        - subnet-7b95d91d
+      LaunchConfigurationName: !Ref TeronLaunchConfiguration
+      TargetGroupARNs:
+        - !Ref TeronTargetGroup
+      Tags: 
+        - Key: 'Name'
+          Value: 'Teron-cfn-masiinat'
+          PropagateAtLaunch: "true"
 Outputs:  
   LoadBalancerDNSName:
     Value: !GetAtt TeronCFloadBalancer.DNSName

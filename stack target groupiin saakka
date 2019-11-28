@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Harjoitustemplaatti"
+Resources:
+  teroncfampari2:
+    Type: "AWS::S3::Bucket"
+  TeronQueue:
+    Type: "AWS::SQS::Queue"
+  TeronEC2:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: "ami-01f14919ba412de34"
+      InstanceType: "t3.nano"
+      SecurityGroups: 
+        - !Ref TeronEC2SecurityGroup
+  TeronCFloadBalancer:
+    Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
+    Properties:
+      Name: "TeronCFloadBalancer"
+      Scheme: "internet-facing"
+      SecurityGroups: 
+        - !Ref TeronALBSecurityGroup
+      Subnets:
+        - subnet-1629765e
+        - subnet-0deb6257
+        - subnet-7b95d91d
+  TeronEC2SecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "SG for EC2"
+      SecurityGroupIngress: 
+        - IpProtocol: TCP
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref TeronALBSecurityGroup
+  TeronALBSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "SG for ALB"
+      # SecurityGroupIngress:
+      #   - IpProtocol: TCP
+      #     FromPort: 80
+      #     ToPort: 80 
+      VpcId: vpc-7da4b71b
+  TeronTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 80
+      Protocol: HTTP
+      VpcId: vpc-7da4b71b
+      TargetType: instance
+  TeronALBlistener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TeronTargetGroup
+      LoadBalancerArn: !Ref TeronCFloadBalancer
+      Port: 80
+      Protocol: HTTP
+Outputs:  
+  LoadBalancerDNSName:
+    Value: !GetAtt TeronCFloadBalancer.DNSName
